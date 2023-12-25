@@ -1,0 +1,55 @@
+import streamlit as st
+import speech_recognition as sr
+from nltk.chat.util import Chat, reflections
+
+# Fonction pour transcrire la parole en texte
+def transcrire_audio():
+    r = sr.Recognizer()
+    with sr.Microphone() as source:
+        st.info("Parlez maintenant...")
+        audio_text = r.listen(source, timeout=5)
+        st.info("Transcription en cours...")
+        try:
+            text = r.recognize_google(audio_text)
+            return text
+        except sr.UnknownValueError:
+            return "Désolé, je n'ai pas compris ce que vous avez dit."
+        except sr.RequestError as e:
+            return f"Désolé, une erreur s'est produite avec le service de reconnaissance vocale : {e}"
+
+# Fonction du chatbot utilisant la classe Chat de NLTK
+def chatbot_algorithm(input_text):
+    # Exemple simple de règles de conversation pour le chatbot
+    chatbot_rules = [
+        (r'bonjour', ['Salut!', 'Comment ça va?']),
+        (r'comment ça va\??', ['Je vais bien, merci!', 'Et vous?']),
+        # Ajoutez vos propres règles de conversation ici
+    ]
+
+    chat = Chat(chatbot_rules, reflections)
+    return chat.respond(input_text)
+
+# Fonction du chatbot prenant à la fois du texte et de la parole en entrée
+def chatbot(user_input):
+    if user_input:
+        return chatbot_algorithm(user_input)
+    else:
+        # Si aucune saisie texte n'est fournie, essayez la saisie vocale
+        speech_input = transcrire_audio()
+        return chatbot_algorithm(speech_input)
+
+# Interface utilisateur Streamlit
+def main():
+    st.title("Chatbot Vocal")
+
+    # Zone de saisie pour l'utilisateur
+    user_input = st.text_input("Vous pouvez saisir votre message ici:")
+
+    # Bouton pour envoyer la saisie texte ou vocale
+    if st.button("Envoyer"):
+        # Appeler la fonction du chatbot avec la saisie utilisateur
+        response = chatbot(user_input)
+        st.write("Chatbot:", response)
+
+if __name__ == "__main__":
+    main()
